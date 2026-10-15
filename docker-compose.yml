@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-secfi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secfi_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-secfi}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-secfi}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.1
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-secfi}:${POSTGRES_PASSWORD:-secfi_dev}@postgres:5432/${POSTGRES_DB:-secfi}
+      DATABASE_URL_SYNC: postgresql://${POSTGRES_USER:-secfi}:${POSTGRES_PASSWORD:-secfi_dev}@postgres:5432/${POSTGRES_DB:-secfi}
+      QDRANT_HOST: qdrant
+    volumes:
+      - ./data:/app/data
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python -m app.worker
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-secfi}:${POSTGRES_PASSWORD:-secfi_dev}@postgres:5432/${POSTGRES_DB:-secfi}
+      DATABASE_URL_SYNC: postgresql://${POSTGRES_USER:-secfi}:${POSTGRES_PASSWORD:-secfi_dev}@postgres:5432/${POSTGRES_DB:-secfi}
+      QDRANT_HOST: qdrant
+    volumes:
+      - ./data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  qdrant_data:

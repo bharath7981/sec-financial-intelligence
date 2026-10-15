@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+env/
+*.log
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+frontend/dist/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
+
+# Databases and Vector Stores (Keep repo clean & <10MB)
+data/
+backend/data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+qdrant_local/
+
+# Evaluation & Test Caches
+.pytest_cache/
+.deepeval/
+htmlcov/
+*benchmark_results.json
+
+# Operating System
+.DS_Store
+Thumbs.db
+desktop.ini

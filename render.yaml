@@ -1,0 +1,35 @@
+# Render Blueprint for SEC Financial Intelligence Engine
+# Optimized for Render Free Tier (512 MB RAM, 512 MB Disk)
+
+services:
+  - type: web
+    name: sec-financial-intelligence
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: "cd frontend && npm install && npm run build && cd .. && pip install --upgrade pip && pip install -r backend/requirements.txt"
+    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: NODE_VERSION
+        value: 20.10.0
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: SEC_USER_AGENT
+        value: "SEC-Financial-Intelligence/1.0 (contact@secfi.internal)"
+      - key: CORS_ORIGINS
+        value: '["*"]'
+      # Optional AI Providers (Leave blank for deterministic fallback mode)
+      - key: AI_CHAT_PROVIDER
+        value: "none"
+      - key: AI_EMBEDDING_PROVIDER
+        value: "none"
+      - key: AI_RERANK_PROVIDER
+        value: "none"
+      # If you have a Gemini API key, add it in the Render dashboard:
+      # - key: GEMINI_API_KEY
+      #   sync: false
